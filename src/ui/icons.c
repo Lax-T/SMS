@@ -7,8 +7,11 @@ static u8 ico_degre_c15[] = {0x0f, 0x0f,
 static u8 ico_minus12x6[] = {0x0c, 0x06,
 	0x7f, 0xff, 0xff, 0xff, 0xff, 0x7f, 0xe0, 0xf0, 0xf0, 0xf0, 0xf0, 0xe0}; // Short minus sign for 44px digital font
 
+static u8 ico_dot3x3[] = {0x03, 0x03,
+	0xe0, 0xe0, 0xe0}; // 3x3 pix dot icon for home screen
 
-static u8 *icons[] = {ico_degre_c15, ico_minus12x6};
+
+static u8 *icons[] = {ico_degre_c15, ico_minus12x6, ico_dot3x3};
 
 u8* ico_getIcon(u8 icon_id) {
 	return icons[icon_id];
