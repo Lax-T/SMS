@@ -9,6 +9,84 @@ ADC_InitTypeDef ADCInit;
 TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
 TIM_OCInitTypeDef timerPWM;
 
+
+/* System clock configuration */
+unsigned char clkInit() {
+	u8 status = 0;
+	u16 pll_delay = 0;
+
+	/* First, ensure that running on internal 16MHz RC clock. */
+	RCC_SYSCLKConfig(RCC_SYSCLKSource_HSI);
+	/* Disable PLL (to be able to reconfigure later)*/
+	RCC_PLLCmd(DISABLE);
+	/* Enable HSE */
+	RCC_HSEConfig(RCC_HSE_ON);
+	/* Wait for HSE to stabilize */
+	if (RCC_WaitForHSEStartUp() == SUCCESS) {
+		/* When HSE ready, configure PLL
+		Clock: HSE, VCO: 2*192 = 384MHZ, SYSCLK: 384/4 = 96MHz, USB/SDIO/RNG: 384/8 = 48MHz */
+		RCC_PLLConfig(RCC_PLLSource_HSE, (HSE_CRYSTAL_MHZ / 2), 192, 4, 8);
+		/* Enable PLL */
+		RCC_PLLCmd(ENABLE);
+		/* Wait for PLL to stabilize. */
+		while (RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET){
+			pll_delay++;
+			if (pll_delay >= 4000) { // Approximately 8...10mS
+				/* If PLL didn't stabilize within timeout, set error flag and break; */
+				status |= RCC_PLL_FAIL;
+				break;
+			}
+		}
+		/* Check if PLL actually stabilized. */
+		if (status == RCC_CLOCK_OK) { // All flags clear (0)
+			/* Set Flash memory latency */
+			FLASH_SetLatency(FLASH_Latency_3); // 4 CPU cycles
+			/* Configure AHB clock */
+			RCC_HCLKConfig(RCC_SYSCLK_Div1); // 96MHz
+			/* Configure High Speed APB2 clock */
+			RCC_PCLK2Config(RCC_HCLK_Div2); // 48MHZ
+			/* Configure Low Speed APB1 clock */
+			RCC_PCLK1Config(RCC_HCLK_Div4); // 24MHz
+			/* Switch system clock to PLL */
+			RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
+		}
+		/* If PLL did not stabilize, leave HSI (16MHz) as clock source and return error code */
+		return status;
+
+	} else {
+		/* If HSE did not stabilize, set error flag */
+		status |= RCC_HSE_FAIL;
+		/* Run PLL from HSI, Clock: HSI, VCO: 2*192 = 384MHZ, SYSCLK: 384/4 = 96MHz, USB/SDIO/RNG: 384/8 = 48MHz */
+		RCC_PLLConfig(RCC_PLLSource_HSI, 8, 192, 4, 8);
+		/* Enable PLL */
+		RCC_PLLCmd(ENABLE);
+		/* Wait for PLL to stabilize. */
+		while (RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET){
+			pll_delay++;
+			if (pll_delay >= 4000) { // Approximately 8...10mS
+				/* If PLL didn't stabilize within timeout, set error flag and break; */
+				status |= RCC_PLL_FAIL;
+				break;
+			}
+		}
+		/* Check if PLL actually stabilized. */
+		if ((status & ~RCC_HSE_FAIL) == RCC_CLOCK_OK) { // All flags, except RCC_HSE_FAIL clear
+			/* Set Flash memory latency */
+			FLASH_SetLatency(FLASH_Latency_3); // 4 CPU cycles
+			/* Configure AHB clock */
+			RCC_HCLKConfig(RCC_SYSCLK_Div1); // 96MHz
+			/* Configure High Speed APB2 clock */
+			RCC_PCLK2Config(RCC_HCLK_Div2); // 48MHZ
+			/* Configure Low Speed APB1 clock */
+			RCC_PCLK1Config(RCC_HCLK_Div4); // 24MHz
+			/* Switch system clock to PLL */
+			RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
+		}
+		/* If PLL did not stabilize, leave HSI (16MHz) as clock source and return error code. */
+		return status;
+	}
+}
+
 void init() {
 
 	// Enable peripheral clock
@@ -23,19 +101,6 @@ void init() {
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
 	//RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6 , ENABLE);
-
-	/*
-	// Set system clock to HSI > PLL x4 (16 MHz)
-	RCC_SYSCLKConfig(RCC_SYSCLKSource_HSI);
-	RCC_PLLCmd(DISABLE);
-	RCC_PLLConfig(RCC_PLLSource_HSI_Div2, RCC_PLLMul_4);
-	RCC_PLLCmd(ENABLE);
-	// If PLL is not starting with internal RC something is really wrong...
-	while (RCC_GetFlagStatus(RCC_FLAG_PLLRDY) == RESET)
-		{
-		}
-	RCC_SYSCLKConfig(RCC_SYSCLKSource_PLLCLK);
-	*/
 
 	/*
 	// PORT A init
@@ -134,7 +199,7 @@ void init() {
 
 	ADC_Cmd (ADC1, ENABLE);  //enable ADC1*/
 
-	TIM_TimeBaseStructure.TIM_Period  = 0x0002;
+	TIM_TimeBaseStructure.TIM_Period  = 0x0003;
 	TIM_TimeBaseStructure.TIM_Prescaler = (1)-1;
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
 	TIM_TimeBaseStructure.TIM_CounterMode =  TIM_CounterMode_Up;
@@ -143,7 +208,7 @@ void init() {
 
 	timerPWM.TIM_OCMode = TIM_OCMode_PWM1;
 	timerPWM.TIM_OutputState = TIM_OutputState_Enable;
-	timerPWM.TIM_Pulse = 0x0001;
+	timerPWM.TIM_Pulse = 0x0002;
 	timerPWM.TIM_OCPolarity = TIM_OCPolarity_High;
 	TIM_OC1Init(TIM4, &timerPWM);
 

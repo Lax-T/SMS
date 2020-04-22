@@ -1,4 +1,4 @@
-#define CORE_FREQUENCY_MHz 16
+#define CORE_FREQUENCY_MHz 48
 
 #define USDELAY_CALC(delay) (delay*CORE_FREQUENCY_MHz-28)
 

@@ -98,7 +98,7 @@ void initCommandSequnce() {
 void sendCommand(unsigned char data) {
 	SPI_SEND_INSTR;
 	spiTxByte(data);
-	uSDelay(1000);
+	uSDelay(USDELAY_CALC(10));
 
 }
 
@@ -108,7 +108,7 @@ void sendData(unsigned char data) {
 }
 
 void resetController() {
-	mSDelay(200);
+	mSDelay(100);
 	RESET_LOW;
 	mSDelay(2);
 	RESET_HI;
@@ -117,12 +117,12 @@ void resetController() {
 
 void spiCSLow() {
 	SPI_CS_LOW;
-	uSDelay(1000);
+	uSDelay(USDELAY_CALC(2));
 }
 
 void spiCSHi() {
 	SPI_CS_HI;
-	uSDelay(1000);
+	uSDelay(USDELAY_CALC(2));
 }
 
 void spiTxByte(unsigned char data) {
@@ -135,13 +135,10 @@ void spiTxByte(unsigned char data) {
 		else {
 			SPI_DATA_LOW;
 		}
-		uSDelay(400);
 		SPI_CLK_HI;
-		uSDelay(400);
 		SPI_CLK_LOW;
 		data = data << 1;
 	}
-	uSDelay(400);
 }
 
 
