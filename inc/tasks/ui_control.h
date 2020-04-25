@@ -1,4 +1,5 @@
 #include <globals.h>
+#include "misc/datetime.h"
 
 #ifndef UI_CONTROL_STRUCT_DEF_
 #define UI_CONTROL_STRUCT_DEF_
@@ -6,6 +7,7 @@
 /* Holds common UI context.
  * Not intended to be modified by Event handlers and view render functions. */
 struct UIContext {
+	struct DateTime current_dt;
 	u8 year;
 	u8 month;
 	u8 day;
@@ -30,6 +32,6 @@ struct ViewContext {
 	u8 dfkjgnkjfd;
 };
 
-#endif /* TEST_H__*/
+#endif
 
-void sys_taskUIControl(void *arg);
+void uic_taskUIControl(void *arg);

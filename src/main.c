@@ -7,15 +7,15 @@
   * @brief   Default main function.
   ******************************************************************************
 */
-
+#include "FreeRTOS.h"
+#include "task.h"
+#include "queue.h"
 #include <drivers/led_driver.h>
 #include <drivers/UC1608X_driver.h>
 #include <ui/fonts.h>
 #include "stm32f2xx.h"
 #include "main.h"
 #include "init.h"
-#include "FreeRTOS.h"
-#include "queue.h"
 #include "tasks/system.h"
 #include "ui/glib.h"
 #include "ui/icons.h"
@@ -23,22 +23,27 @@
 #include <tasks/ui_control.h>
 #include "ui/led_control.h"
 #include "delays.h"
+#include "tasks/slow_bus_master.h"
+#include "misc/task_messaging.h"
 			
+
+QueueHandle_t xUIQueue;
+
 
 int main(void)
 {
-	char r = 'ÿ';
+	u8 clk_status = clkInit();
 	init();
+	if (clk_status == 0) {
+		mSLED_GREEN_ON;
+	} else {
+		mSLED_GREEN_OFF;
+	}
 
 	mBTN_SYNC_135_ON;
 	mLDR_CLK_LO;
 	mLDR_DATA_LO;
 	mLDR_LAT_LO;
-	if (r == 0xFF) {
-		mSLED_GREEN_ON;
-	} else {
-		mSLED_GREEN_OFF;
-	}
 
 /*
 	static u8 tile[] = {0x09, 0x10, 0x00, 0x00, 0x00, 0x22, 0x22, 0x22, 0xff, 0x22, 0x44, 0xff, 0x44, 0x44, 0x44, 0x00,
@@ -55,8 +60,10 @@ int main(void)
 
 	static u8 *hello_world[] = {tile_72, tile_101, tile_108, tile_108, tile_111, tile_30, tile_119, tile_111, tile_114, tile_108, tile_100};
 */
+	/* MOVED TO UI TASK
 	uc_initController();
 	gl_clearBuffer();
+	*/
 	//gl_setCursor(0, 0);
 	//gl_mergeTile(tile);
 	/*
@@ -79,6 +86,8 @@ int main(void)
 		chr = text[i];
 		gl_mergeTile(font[chr]);
 	}*/
+
+	/*
 	gl_setCursor(0, 0);
 	gl_printString("SMS Gen.2", CONSOLAS_11PT);
 
@@ -89,7 +98,7 @@ int main(void)
 	gl_printString("1234", DIGITAL_25PX);
 
 	gl_setCursor(0, 70);
-	gl_printString("1358", DIGITAL_44PX);
+	gl_printString("1358.", DIGITAL_44PX);
 
 	gl_setCursor(0, 120);
 	gl_printString("0123456", DIGITAL_19PX);
@@ -106,14 +115,20 @@ int main(void)
 	gl_setCursor(0, 162);
 	gl_printString("AIRPr  mm %", ARIAL_10PTB);
 
-	gl_setCursor(4, 200);
+	gl_setCursor(4, 180);
 	gl_drawHLine(3, 5);
 
+	//Formatted string test
+	gl_setCursor(0, 185);
+	gl_printFString("AIRPr %06uc", 2, ARIAL_10PTB);
+	gl_setCursor(0, 200);
+	s8 s = -2;
+	gl_printFString("AIRPr %sc", &s, ARIAL_10PTB);
+	gl_setCursor(0, 215);
+	float f = 14.897;
+	gl_printFString("AIRPr %.3f", &f, ARIAL_10PTB);
 
-
-
-
-	gl_refreshLCD();
+	gl_refreshLCD();*/
 
 	/*uc_setWriteAddress(0, 0);
 	uc_writeSingle(0xFF);
@@ -132,6 +147,8 @@ int main(void)
 	uc_writeSingle(0x07);
 	uc_writeSingle(0xF7);
 	uc_writeSingle(0xF7);*/
+
+	/* MOVED TO UI TASK
 	uc_lcdOn();
 
 	lc_init();
@@ -147,18 +164,28 @@ int main(void)
 	lc_setTimeValue(12, 24);
 
 	lc_refresh();
+	*/
+
 	//mSLED_RED_ON;
 	//ldr_testRun();
 
-	//xTaskCreate(sys_taskUIControl(), "UI ctrl", 128, NULL, 1, NULL);
+	/* Create queues */
+	xUIQueue = xQueueCreate(10, sizeof(struct StandardQueueMessage));
+
+	/* Initialize tasks (threads) */
+	xTaskCreate(uic_taskUIControl, "UI ctrl", 256, NULL, 1, NULL);
+	xTaskCreate(sbm_taskSlowBusMaster, "Slow I2C", 256, NULL, 1, NULL);
 	//xTaskCreate(sys_taskSystem, "System", 128, NULL, 1, NULL);
-	//vTaskStartScheduler();
+	vTaskStartScheduler();
+	/*
 	u8 sec = 0;
 	u8 min = 34;
 	u8 hour = 12;
+	*/
 
 	while(1) {
 		mSDelay(1200);
+		/* MOVED TO UI TASK
 		sec++;
 		if (sec >= 60) {
 			sec = 0;
@@ -174,6 +201,7 @@ int main(void)
 		lc_setSecondValue(sec);
 		lc_setTimeValue(hour, min);
 		lc_refresh();
+		*/
 
 		if (mBTN_IN_OK) {
 			mSLED_RED_ON;
