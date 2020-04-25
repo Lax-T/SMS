@@ -89,25 +89,33 @@ unsigned char clkInit() {
 
 void init() {
 
-	// Enable peripheral clock
+	/* Enable peripheral clock */
+	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOB, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
 
-	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
-	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE);
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
-	//RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6 , ENABLE);
+
+	/* PORT A init */
+	GPIOInit.GPIO_Mode = GPIO_Mode_IN;
+	GPIOInit.GPIO_Pin = SQW_IN_PIN;
+	GPIO_Init(GPIOA, &GPIOInit);
+
+	GPIOInit.GPIO_Mode = GPIO_Mode_OUT;
+	GPIOInit.GPIO_OType= GPIO_OType_OD;
+	GPIOInit.GPIO_Pin = SLI2C_SCL_PIN | SLI2C_SDA_PIN;
+	GPIOInit.GPIO_Speed = GPIO_Speed_25MHz;
+	GPIO_Init(GPIOA, &GPIOInit);
+	/* Set HI slow I2C bus SCL/SDA lines. */
+	GPIO_SetBits(GPIOA, SLI2C_SCL_PIN);
+	GPIO_SetBits(GPIOA, SLI2C_SDA_PIN);
 
 	/*
 	// PORT A init
-	GPIOInit.GPIO_Mode = GPIO_Mode_AIN;
-	GPIOInit.GPIO_Pin = GPIO_Pin_1 | GPIO_Pin_2;
-	GPIO_Init(GPIOA, &GPIOInit);
-
 	GPIOInit.GPIO_Mode = GPIO_Mode_Out_PP;
 	GPIOInit.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_4 | GPIO_Pin_5 | GPIO_Pin_6 | GPIO_Pin_11 | GPIO_Pin_12;
 	GPIOInit.GPIO_Speed = GPIO_Speed_10MHz;
