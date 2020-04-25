@@ -132,8 +132,8 @@ void sli2c_MAck() {
 	uSDelay(USDELAY_CALC(6));
 	mSLI2C_SCL_LOW;
 	uSDelay(USDELAY_CALC(6));
-	//mSLI2C_SDA_HI;
-	//uSDelay(USDELAY_CALC(6));
+	mSLI2C_SDA_HI;
+	uSDelay(USDELAY_CALC(3));
 }
 
 void sli2c_MNAck() {
