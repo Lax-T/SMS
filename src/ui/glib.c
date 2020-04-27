@@ -292,6 +292,9 @@ void gl_printFString(char *string, void *val, u8 font_id) {
 					float n = *((float*)val);
 					u32 n_copy = (u32)fabs(n);
 					/* Calculate number of digits to be displayed. */
+					if (n_copy == 0) {
+						n_digits++;
+					}
 					while (n_copy != 0) {
 						n_digits++;
 						n_copy /= 10;
@@ -380,13 +383,16 @@ void gl_printFString(char *string, void *val, u8 font_id) {
 					}
 					n_copy = n;
 					/* Calculate number of digits to be displayed. */
+					if (n_copy == 0) {
+						n_digits++;
+					}
 					while (n_copy != 0) {
 						n_digits++;
 						n_copy /= 10;
 					}
 
 					/* If minimum width is defined and/or lower than expected len, make zero/space padding */
-					if (width > n_digits) { // +1 because dot character should also be included
+					if (width > n_digits) {
 						if (is_zpadding == 1) {
 							/* Print zeros till with equalizes */
 							while (width > n_digits) { // +1 because dot character should also be included
@@ -438,6 +444,9 @@ void gl_printFString(char *string, void *val, u8 font_id) {
 					}
 					n_copy = n;
 					/* Calculate number of digits to be displayed. */
+					if (n_copy == 0) {
+						n_digits++;
+					}
 					while (n_copy != 0) {
 						n_digits++;
 						n_copy /= 10;
@@ -459,7 +468,7 @@ void gl_printFString(char *string, void *val, u8 font_id) {
 						}
 					}
 					/* If minimum width is defined and/or lower than expected len, make zero/space padding */
-					if (width > n_digits) { // +1 because dot character should also be included
+					if (width > n_digits) {
 						if (is_zpadding == 1) {
 							/* Print zeros till with equalizes */
 							while (width > n_digits) { // +1 because dot character should also be included

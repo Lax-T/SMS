@@ -19,6 +19,8 @@ void _tpl_printDOWShort(u8 dow) {
 }
 
 void tpl_home(struct UIContext ui_context, struct ViewContext view_context) {
+	/* Clear buffer */
+	gl_clearBuffer();
 
 	/* Draw lines */
 	gl_setCursor(0, 16);

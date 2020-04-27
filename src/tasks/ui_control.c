@@ -38,9 +38,9 @@ void uic_taskUIControl(void *arg) {
 
 	lc_refresh();
 
-	ui_context.in_temp = 24;
-	ui_context.in_temp_fract = 5;
-	ui_context.in_rh = 84;
+	ui_context.in_temp = 0;
+	ui_context.in_temp_fract = 0;
+	ui_context.in_rh = 0;
 	ui_context.in_eco2 = 1024;
 	ui_context.in_tvoc = 223;
 	ui_context.pressure = 756;
@@ -61,9 +61,11 @@ void uic_taskUIControl(void *arg) {
 		lc_setSecondValue(ui_context.current_dt.second);
 		lc_setTimeValue(ui_context.current_dt.hour, ui_context.current_dt.minute);
 		lc_refresh();
+		/* And GLCD */
+		tpl_home(ui_context, view_context);
 
 		// Sleep
-		vTaskDelay(10);
+		vTaskDelay(20);
 	}
 }
 
@@ -78,6 +80,15 @@ void _uic_checkQueue(struct UIContext *ui_context) {
 		case mtDATE_TIME:
 			/* Deserialize to UI context */
 			deSerializeDateTime(message.payload, date_time);
+			break;
+
+		case mtINT_TEMP:
+			ui_context->in_temp = message.payload[0];
+			ui_context->in_temp_fract = message.payload[1];
+			break;
+
+		case mtINT_HUM:
+			ui_context->in_rh = message.payload[0];
 			break;
 		}
 	}
