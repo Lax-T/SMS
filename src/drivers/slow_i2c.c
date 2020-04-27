@@ -12,6 +12,18 @@ void sli2c_TXByte(unsigned char data);
 unsigned char sli2c_RXByte();
 
 /* Protocol level */
+void sli2c_sendCmd(u8 slave_adr, u8 cmd) {
+	/* Shift address and set write bit */
+	slave_adr = (slave_adr << 1) & 0xFE;
+	/* Do the work */
+	sli2c_Start();
+	sli2c_TXByte(slave_adr);
+	sli2c_SAck();
+	sli2c_TXByte(cmd);
+	sli2c_SAck();
+	sli2c_Stop();
+}
+
 void sli2c_writeByte(u8 slave_adr, u8 word_adr, u8 data) {
 	/* Shift address and set write bit */
 	slave_adr = (slave_adr << 1) & 0xFE;
@@ -79,6 +91,27 @@ void sli2c_readBlock(u8 slave_adr, u8 word_adr, u8 data[], u8 data_size) {
 	sli2c_SAck();
 	/* Set read bit */
 	slave_adr = slave_adr | 0x01;
+	/* Restart and read */
+	sli2c_Start();
+	sli2c_TXByte(slave_adr);
+	sli2c_SAck();
+	/* Read first byte */
+	data[0] = sli2c_RXByte();
+	/* Read second and next bytes */
+	for (i=1; i < data_size; i++) {
+		sli2c_MAck();
+		data[i] = sli2c_RXByte();
+	}
+	/* Finalize transaction by NAck and Stop */
+	sli2c_MNAck();
+	sli2c_Stop();
+}
+
+/* Read block without setting address (current address read). */
+void sli2c_readBlockCA(u8 slave_adr, u8 data[], u8 data_size) {
+	u8 i;
+	/* Shift address and set read bit */
+	slave_adr = (slave_adr << 1) | 0x01;
 	/* Restart and read */
 	sli2c_Start();
 	sli2c_TXByte(slave_adr);
