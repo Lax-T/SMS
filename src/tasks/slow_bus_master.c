@@ -5,6 +5,7 @@
 #include "tasks/slow_bus_master.h"
 #include "drivers/DS3231_driver.h"
 #include "drivers/SHT21_driver.h"
+#include "drivers/MPL3115A2_driver.h"
 #include "misc/datetime.h"
 #include "misc/task_messaging.h"
 
@@ -23,18 +24,24 @@ extern QueueHandle_t xUIQueue;
 */
 // TODO: Test timings, remove
 #define tSBM_IAQ_STARTUP 360 // 360S - Time to first measurement after power-up
+
 #define tSBM_RHT_PERIOD 50 // 150S - Temperature and humidity measurement period. (actual period is 2x)
 #define tSBM_AIRP_PERIOD 120 // 120S - Air pressure measurement period
 #define tSBM_IAQ_PERIOD 120 // 120S - TVOC and eCO2 measurement period
 
 #define tSBM_TEMP_MEAS 1 // 100mS - Temperature measure time
+#define tSBM_TEMP_TO_HUM_DELAY 2 // 200mS - Temperature to humidity delay
 #define tSBM_HUM_MEASURE 1 // 100mS -  Humidity measure time
+#define tSBM_AIRP_MEASURE 4 // 400mS - Pressure measure time
 
 /* Steps */
 #define sSBM_RHT_MTEMP 0
 #define sSBM_RHT_RTEMP 1
 #define sSBM_RHT_MHUM 2
 #define sSBM_RHT_RHUM 3
+
+#define sSBM_AIRP_MESURE 0
+#define sSBM_AIRP_READ 1
 
 /* Subtasks micro schedule */
 #define flSBM_RTC_SET 0x01
@@ -51,17 +58,23 @@ struct SBMSubTask {
 
 struct SBMContext {
 	struct SBMSubTask rht;
+	struct SBMSubTask airp;
 	u8 flags;
 };
 
 void _smb_readTime();
 void _sbm_runRHT(struct SBMContext *context);
+void _sbm_runAIRP(struct SBMContext *context);
 void _sbm_updateCounters(struct SBMContext *context);
 
 /* Slow I2C bus master task */
 void sbm_taskSlowBusMaster(void *arg) {
 	u8 sqw_state = 0;
-	struct SBMContext context = {{sSBM_RHT_MTEMP, tSBM_RHT_STARTUP}, 0};
+	struct SBMContext context = {
+			{sSBM_RHT_MTEMP, tSBM_RHT_STARTUP},
+			{sSBM_AIRP_MESURE, tSBM_AIRP_STARTUP},
+			0
+	};
 	/* Give some time for power up. */
 	vTaskDelay(pdMS_TO_TICKS(100));
 	rtc_ponInit();
@@ -92,6 +105,11 @@ void sbm_taskSlowBusMaster(void *arg) {
 			/* Run RHT sub task */
 			_sbm_runRHT(&context);
 			context.flags &= ~flSBM_RHT_RUN;
+		}
+		if ((context.flags & flSBM_AIRP_RUN) != 0) {
+			/* Run AIRP sub task */
+			_sbm_runAIRP(&context);
+			context.flags &= ~flSBM_AIRP_RUN;
 		}
 
 		/* Sleep 100mS */
@@ -140,12 +158,10 @@ void _sbm_runRHT(struct SBMContext *context) {
 			message.type = mtINT_TEMP;
 			message.sender = msSL_BUS_MASTER;
 			decomposeTemp(temp, message.payload);
-			//message.payload[0] = (unsigned char)temp; // Decimal part
-			//message.payload[1] = (unsigned char)((temp - message.payload[0]) * 10); // Fraction part
 			/* Send message */
 			xQueueSend(xUIQueue, (void *) &message, 0);
 			/* Set timeout and next step */
-			context->rht.counter = tSBM_RHT_PERIOD;
+			context->rht.counter = tSBM_TEMP_TO_HUM_DELAY;
 			context->rht.step = sSBM_RHT_MHUM;
 			break;
 
@@ -174,8 +190,34 @@ void _sbm_runRHT(struct SBMContext *context) {
 }
 
 /* Read air pressure subtask */
-void _sbm_runAIRP() {
+void _sbm_runAIRP(struct SBMContext *context) {
+	struct StandardQueueMessage message;
+	u16 pressure;
 
+	switch (context->airp.step) {
+		case sSBM_AIRP_MESURE:
+			/* Send pressure measure command */
+			mpl_measurePressure();
+			/* Set measure timeout and next step */
+			context->airp.counter = tSBM_AIRP_MEASURE;
+			context->airp.step = sSBM_AIRP_READ;
+			break;
+
+		case sSBM_AIRP_READ:
+			/* Read pressure value */
+			pressure = mpl_readPressure();
+			/* Send message(s) with updated pressure value. */
+			message.type = mtPRESSURE;
+			message.sender = msSL_BUS_MASTER;
+			message.payload[0] = pressure >> 8;
+			message.payload[1] = pressure & 0x00FF;
+			/* Send message */
+			xQueueSend(xUIQueue, (void *) &message, 0);
+			/* Set timeout and next step */
+			context->airp.counter = tSBM_AIRP_PERIOD;
+			context->airp.step = sSBM_AIRP_MESURE;
+			break;
+	}
 }
 
 /* Read air quality/eCO2 subtask */
@@ -189,6 +231,12 @@ void _sbm_updateCounters(struct SBMContext *context) {
 		context->rht.counter--;
 		if (context->rht.counter == 0) {
 			context->flags |= flSBM_RHT_RUN;
+		}
+	}
+	if (context->airp.counter > 0) {
+		context->airp.counter--;
+		if (context->airp.counter == 0) {
+			context->flags |= flSBM_AIRP_RUN;
 		}
 	}
 }

@@ -2,6 +2,7 @@
 #include "globals.h"
 #include "misc/task_messaging.h"
 
+/* Decompose float temperature value to two uchars, to send in standard queue message. */
 void decomposeTemp(float temp, u8 buffer[]) {
 	/* Since standard message is defined as unsigned char, type cast is performed.
 	Upon message receive it will be cast back to signed. */
