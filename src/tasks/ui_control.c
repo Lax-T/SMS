@@ -1,14 +1,42 @@
-#include <tasks/ui_control.h>
+#include "tasks/ui_control.h"
 #include "ui/ui_templates.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
+#include "ui/glib.h"
+#include "ui/led_control.h"
+#include "drivers/UC1608X_driver.h"
+#include "misc/task_messaging.h"
 
+extern QueueHandle_t xUIQueue;
 
-/* Main system task */
-void sys_taskUIControl(void *arg) {
+void _uic_checkQueue(struct UIContext *ui_context);
+
+/* UI control task */
+void uic_taskUIControl(void *arg) {
 	struct UIContext ui_context;
 	struct ViewContext view_context;
+
+	/* Power on initialize */
+	/* GLCD initialization */
+	uc_initController();
+	gl_clearBuffer();
+	gl_refreshLCD();
+	uc_lcdOn();
+	/* Led controllers initialization */
+	lc_init();
+	lc_setBacklightGroupValue(10);
+
+	lc_setAmbientBrt(2);
+	lc_setAmbientGroupValue(240, 120, 2);
+
+	lc_setSecondBrt(15);
+	lc_setSecondValue(0);
+
+	lc_setTimeBrt(40);
+	lc_setTimeValue(0, 0);
+
+	lc_refresh();
 
 	ui_context.in_temp = 24;
 	ui_context.in_temp_fract = 5;
@@ -27,7 +55,34 @@ void sys_taskUIControl(void *arg) {
 	tpl_home(ui_context, view_context);
 
 	while(1) {
+		_uic_checkQueue(&ui_context);
+
+		/* Temporary code to update LEDs */
+		lc_setSecondValue(ui_context.current_dt.second);
+		lc_setTimeValue(ui_context.current_dt.hour, ui_context.current_dt.minute);
+		lc_refresh();
+
 		// Sleep
-		vTaskDelay(100);
+		vTaskDelay(10);
 	}
 }
+
+/* Check and handle messages from UI queue. */
+void _uic_checkQueue(struct UIContext *ui_context) {
+	struct StandardQueueMessage message;
+	struct DateTime *date_time = &(ui_context->current_dt);
+	/* Read messages from queue */
+	while(xQueueReceive(xUIQueue, &(message), 0)) {
+		switch (message.type) {
+		/* Handle message with new DateTime */
+		case mtDATE_TIME:
+			/* Deserialize to UI context */
+			deSerializeDateTime(message.payload, date_time);
+			break;
+		}
+	}
+}
+
+
+
+
