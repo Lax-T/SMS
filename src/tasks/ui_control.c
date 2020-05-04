@@ -90,6 +90,10 @@ void _uic_checkQueue(struct UIContext *ui_context) {
 		case mtINT_HUM:
 			ui_context->in_rh = message.payload[0];
 			break;
+
+		case mtPRESSURE:
+			ui_context->pressure = 0x0000 | ((0x0000 | message.payload[0]) << 8) | message.payload[1];
+			break;
 		}
 	}
 }
