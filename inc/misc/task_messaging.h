@@ -21,5 +21,6 @@ struct StandardQueueMessage {
 #define mtINT_TEMP 1
 #define mtINT_HUM 2
 #define mtPRESSURE 3
+#define mtAIR_QUALITY 4
 
 void decomposeTemp(float temp, u8 buffer[]);

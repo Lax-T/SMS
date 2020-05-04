@@ -28,7 +28,7 @@ float sht_readTemp() {
 	float calc_value;
 	u8 data[2];
 	/* Read RAW temperature value (2 bytes) from current address */
-	sli2c_readBlockCA(SHT_SLA_ADR, data, 2);
+	sli2c_readBlockCA(SHT_SLA_ADR, data, 2, FALSE);
 	/* Result conversion */
 	raw_value = (raw_value | data[0]) << 8;
 	raw_value = raw_value | (data[1] & 0xFC);
@@ -49,7 +49,7 @@ unsigned char sht_readHumidity() {
 	float calc_value;
 	u8 data[2];
 	/* Read RAW humidity value (2 bytes) from current address */
-	sli2c_readBlockCA(SHT_SLA_ADR, data, 2);
+	sli2c_readBlockCA(SHT_SLA_ADR, data, 2, FALSE);
 	/* Result conversion */
 	raw_value = (raw_value | data[0]) << 8;
 	raw_value = raw_value | (data[1] & 0xF0);

@@ -9,7 +9,7 @@ void sli2c_SAck();
 void sli2c_MAck();
 void sli2c_MNAck();
 void sli2c_TXByte(unsigned char data);
-unsigned char sli2c_RXByte();
+unsigned char sli2c_RXByte(u8 is_clk_stretch);
 
 /* Protocol level */
 void sli2c_sendCmd(u8 slave_adr, u8 cmd) {
@@ -73,7 +73,7 @@ unsigned char sli2c_readByte(u8 slave_adr, u8 word_adr) {
 	sli2c_Start();
 	sli2c_TXByte(slave_adr);
 	sli2c_SAck();
-	data = sli2c_RXByte();
+	data = sli2c_RXByte(FALSE);
 	sli2c_MNAck();
 	sli2c_Stop();
 	return data;
@@ -96,11 +96,11 @@ void sli2c_readBlock(u8 slave_adr, u8 word_adr, u8 data[], u8 data_size) {
 	sli2c_TXByte(slave_adr);
 	sli2c_SAck();
 	/* Read first byte */
-	data[0] = sli2c_RXByte();
+	data[0] = sli2c_RXByte(FALSE);
 	/* Read second and next bytes */
 	for (i=1; i < data_size; i++) {
 		sli2c_MAck();
-		data[i] = sli2c_RXByte();
+		data[i] = sli2c_RXByte(FALSE);
 	}
 	/* Finalize transaction by NAck and Stop */
 	sli2c_MNAck();
@@ -108,7 +108,7 @@ void sli2c_readBlock(u8 slave_adr, u8 word_adr, u8 data[], u8 data_size) {
 }
 
 /* Read block without setting address (current address read). */
-void sli2c_readBlockCA(u8 slave_adr, u8 data[], u8 data_size) {
+void sli2c_readBlockCA(u8 slave_adr, u8 data[], u8 data_size, u8 is_clk_stretch) {
 	u8 i;
 	/* Shift address and set read bit */
 	slave_adr = (slave_adr << 1) | 0x01;
@@ -117,11 +117,11 @@ void sli2c_readBlockCA(u8 slave_adr, u8 data[], u8 data_size) {
 	sli2c_TXByte(slave_adr);
 	sli2c_SAck();
 	/* Read first byte */
-	data[0] = sli2c_RXByte();
+	data[0] = sli2c_RXByte(is_clk_stretch);
 	/* Read second and next bytes */
 	for (i=1; i < data_size; i++) {
 		sli2c_MAck();
-		data[i] = sli2c_RXByte();
+		data[i] = sli2c_RXByte(is_clk_stretch);
 	}
 	/* Finalize transaction by NAck and Stop */
 	sli2c_MNAck();
@@ -197,9 +197,22 @@ void sli2c_TXByte(unsigned char data) {
 	uSDelay(USDELAY_CALC(3));
 }
 
-unsigned char sli2c_RXByte() {
+unsigned char sli2c_RXByte(u8 is_clk_stretch) {
 	unsigned char data=0;
+	u16 cs_counter = 0;
 	char i = 0;
+
+	/* If required, check if SCL pin is released (clock stretching) */
+	if (is_clk_stretch) {
+		mSLI2C_SCL_HI;
+		uSDelay(USDELAY_CALC(6));
+		while((mSLI2C_SCL_IN == 0) && (cs_counter < 20000)) {
+			uSDelay(USDELAY_CALC(50));
+			cs_counter++;
+		}
+		uSDelay(USDELAY_CALC(6));
+	}
+	/* Continue read */
 	for (i=0; i < 8; i++) {
 		data = data << 1;
 		mSLI2C_SCL_HI;
