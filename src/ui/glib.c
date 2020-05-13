@@ -138,7 +138,7 @@ void gl_drawHLine (u8 line_width, u8 line_len) {
 }
 
 /* Print string starting with current cursor position. */
-void gl_printString(u8 *string, u8 font_id) {
+void gl_printString(char *string, u8 font_id) {
 	u8 i, cursor_future_pos;
 	u8* tile;
 	char chr;

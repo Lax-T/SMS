@@ -1,5 +1,5 @@
 #include "tasks/ui_control.h"
-#include "ui/ui_templates.h"
+#include "ui/views/views_control.h"
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -33,7 +33,7 @@ void uic_taskUIControl(void *arg) {
 	lc_setSecondBrt(8);
 	lc_setSecondValue(0);
 
-	lc_setTimeBrt(8);
+	lc_setTimeBrt(6);
 	lc_setTimeValue(0, 0);
 
 	lc_refresh();
@@ -47,12 +47,9 @@ void uic_taskUIControl(void *arg) {
 	ui_context.rm1_rh = 22;
 	ui_context.rm1_temp = -8;
 	ui_context.rm1_temp_fract = 3;
-	ui_context.day = 18;
-	ui_context.month = 4;
-	ui_context.year = 20;
-	ui_context.dow = 6;
 
-	tpl_home(ui_context, view_context);
+	vc_setHomeView(&ui_context);
+	//tpl_home(ui_context, view_context);
 
 	while(1) {
 		_uic_checkQueue(&ui_context);
@@ -62,7 +59,8 @@ void uic_taskUIControl(void *arg) {
 		lc_setTimeValue(ui_context.current_dt.hour, ui_context.current_dt.minute);
 		lc_refresh();
 		/* And GLCD */
-		tpl_home(ui_context, view_context);
+		vc_handleEvet(veDATA_UPDATED, &ui_context);
+		//tpl_home(ui_context, view_context);
 
 		// Sleep
 		vTaskDelay(20);
