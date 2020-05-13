@@ -8,3 +8,4 @@
 #define ARIAL_10PTB 5
 
 u8* fnt_getFont(u8 font_id);
+u8 fnt_getCharSpacing(u8 font_id);

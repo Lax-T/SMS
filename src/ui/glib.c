@@ -193,7 +193,7 @@ void gl_printTileRShift(u8 *tile, u8 char_offset) {
 	}
 }
 
-static u32 pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000, 10000000000};
+static u32 pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000000, 1000000000};
 
 /* Format string with char/short/float and print starting from current cursor position.
  * Formatting syntax: %[flags][width][.precision]specifier
@@ -203,7 +203,7 @@ static u32 pow10[] = {1, 10, 100, 1000, 10000, 100000, 1000000, 10000000, 100000
  * specifier: uc - u_8, sc - s_8, us - u_16, ss - s_16, ui - u_32, si - s_32, f - float
  * */
 void gl_printFString(char *string, void *val, u8 font_id) {
-	u8 i, cursor_future_pos;
+	u8 i;
 	u8* tile;
 	char chr;
 	/* Get font */

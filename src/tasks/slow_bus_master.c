@@ -6,6 +6,7 @@
 #include "drivers/DS3231_driver.h"
 #include "drivers/SHT21_driver.h"
 #include "drivers/MPL3115A2_driver.h"
+#include "drivers/iAQcore_driver.h"
 #include "misc/datetime.h"
 #include "misc/task_messaging.h"
 
@@ -23,14 +24,13 @@ extern QueueHandle_t xUIQueue;
 #define tSBM_IAQ_PERIOD 1200 // 120S - TVOC and eCO2 measurement period
 */
 // TODO: Test timings, remove
-#define tSBM_IAQ_STARTUP 360 // 360S - Time to first measurement after power-up
-
-#define tSBM_RHT_PERIOD 50 // 150S - Temperature and humidity measurement period. (actual period is 2x)
-#define tSBM_AIRP_PERIOD 120 // 120S - Air pressure measurement period
-#define tSBM_IAQ_PERIOD 120 // 120S - TVOC and eCO2 measurement period
+#define tSBM_IAQ_STARTUP 360
+#define tSBM_RHT_PERIOD 600
+#define tSBM_AIRP_PERIOD 300
+#define tSBM_IAQ_PERIOD 120
 
 #define tSBM_TEMP_MEAS 1 // 100mS - Temperature measure time
-#define tSBM_TEMP_TO_HUM_DELAY 2 // 200mS - Temperature to humidity delay
+#define tSBM_TEMP_TO_HUM_DELAY 5 // 500mS - Temperature to humidity delay
 #define tSBM_HUM_MEASURE 1 // 100mS -  Humidity measure time
 #define tSBM_AIRP_MEASURE 4 // 400mS - Pressure measure time
 
@@ -59,12 +59,14 @@ struct SBMSubTask {
 struct SBMContext {
 	struct SBMSubTask rht;
 	struct SBMSubTask airp;
+	struct SBMSubTask iaq;
 	u8 flags;
 };
 
 void _smb_readTime();
 void _sbm_runRHT(struct SBMContext *context);
 void _sbm_runAIRP(struct SBMContext *context);
+void _sbm_runiAQ(struct SBMContext *context);
 void _sbm_updateCounters(struct SBMContext *context);
 
 /* Slow I2C bus master task */
@@ -73,6 +75,7 @@ void sbm_taskSlowBusMaster(void *arg) {
 	struct SBMContext context = {
 			{sSBM_RHT_MTEMP, tSBM_RHT_STARTUP},
 			{sSBM_AIRP_MESURE, tSBM_AIRP_STARTUP},
+			{0, tSBM_IAQ_STARTUP},
 			0
 	};
 	/* Give some time for power up. */
@@ -110,6 +113,11 @@ void sbm_taskSlowBusMaster(void *arg) {
 			/* Run AIRP sub task */
 			_sbm_runAIRP(&context);
 			context.flags &= ~flSBM_AIRP_RUN;
+		}
+		if ((context.flags & flSBM_IAQ_RUN) != 0) {
+			/* Run AIRP sub task */
+			_sbm_runiAQ(&context);
+			context.flags &= ~flSBM_IAQ_RUN;
 		}
 
 		/* Sleep 100mS */
@@ -221,8 +229,23 @@ void _sbm_runAIRP(struct SBMContext *context) {
 }
 
 /* Read air quality/eCO2 subtask */
-void _sbm_runiAQ() {
+void _sbm_runiAQ(struct SBMContext *context) {
+	struct StandardQueueMessage message;
+	struct AQData aq_data;
 
+	/* Read current air quality values */
+	iaq_readAQDAta(&aq_data);
+	/* Send updated air quality values. */
+	message.type = mtAIR_QUALITY;
+	message.sender = msSL_BUS_MASTER;
+	message.payload[0] = aq_data.co2 >> 8;
+	message.payload[1] = aq_data.co2 & 0x00FF;
+	message.payload[2] = aq_data.tvoc >> 8;
+	message.payload[3] = aq_data.tvoc & 0x00FF;
+	/* Send message */
+	xQueueSend(xUIQueue, (void *) &message, 0);
+	/* Set timeout and next step */
+	context->iaq.counter = tSBM_IAQ_PERIOD;
 }
 
 /* Count time and set run flags */
@@ -237,6 +260,12 @@ void _sbm_updateCounters(struct SBMContext *context) {
 		context->airp.counter--;
 		if (context->airp.counter == 0) {
 			context->flags |= flSBM_AIRP_RUN;
+		}
+	}
+	if (context->iaq.counter > 0) {
+		context->iaq.counter--;
+		if (context->iaq.counter == 0) {
+			context->flags |= flSBM_IAQ_RUN;
 		}
 	}
 }

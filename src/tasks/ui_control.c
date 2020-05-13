@@ -30,10 +30,10 @@ void uic_taskUIControl(void *arg) {
 	lc_setAmbientBrt(2);
 	lc_setAmbientGroupValue(240, 120, 2);
 
-	lc_setSecondBrt(15);
+	lc_setSecondBrt(8);
 	lc_setSecondValue(0);
 
-	lc_setTimeBrt(40);
+	lc_setTimeBrt(8);
 	lc_setTimeValue(0, 0);
 
 	lc_refresh();
@@ -93,6 +93,11 @@ void _uic_checkQueue(struct UIContext *ui_context) {
 
 		case mtPRESSURE:
 			ui_context->pressure = 0x0000 | ((0x0000 | message.payload[0]) << 8) | message.payload[1];
+			break;
+
+		case mtAIR_QUALITY:
+			ui_context->in_eco2 = 0x0000 | ((0x0000 | message.payload[0]) << 8) | message.payload[1];
+			ui_context->in_tvoc = 0x0000 | ((0x0000 | message.payload[2]) << 8) | message.payload[3];
 			break;
 		}
 	}
