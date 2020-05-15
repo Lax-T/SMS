@@ -16,6 +16,22 @@
 #define SQW_IN_PIN GPIO_Pin_11
 #define SQW_IN_PORT GPIOA
 
+/* Touch keys */
+#define TK_SYNC_135_PIN GPIO_Pin_6
+#define TK_SYNC_135_PORT GPIOD
+#define TK_SYNC_24_PIN GPIO_Pin_4
+#define TK_SYNC_24_PORT GPIOD
+#define TK_BACK_PIN GPIO_Pin_7
+#define TK_BACK_PORT GPIOD
+#define TK_LEFT_PIN GPIO_Pin_5
+#define TK_LEFT_PORT GPIOD
+#define TK_OK_PIN GPIO_Pin_3
+#define TK_OK_PORT GPIOD
+#define TK_RIGHT_PIN GPIO_Pin_2
+#define TK_RIGHT_PORT GPIOD
+#define TK_OPT_PIN GPIO_Pin_1
+#define TK_OPT_PORT GPIOD
+
 /* Functions */
 void init();
 unsigned char clkInit();
