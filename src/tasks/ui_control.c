@@ -6,6 +6,7 @@
 #include "ui/glib.h"
 #include "ui/led_control.h"
 #include "drivers/UC1608X_driver.h"
+#include "drivers/touch_key_driver.h"
 #include "misc/task_messaging.h"
 
 extern QueueHandle_t xUIQueue;
@@ -14,6 +15,8 @@ void _uic_checkQueue(struct UIContext *ui_context);
 
 /* UI control task */
 void uic_taskUIControl(void *arg) {
+	u8 devider = 0;
+	u8 key;
 	struct UIContext ui_context;
 	struct ViewContext view_context;
 
@@ -53,17 +56,25 @@ void uic_taskUIControl(void *arg) {
 
 	while(1) {
 		_uic_checkQueue(&ui_context);
+		key = tk_scanKeys();
+		if (key != 0) {
+			ui_context.rm1_temp = key;
+		}
 
-		/* Temporary code to update LEDs */
-		lc_setSecondValue(ui_context.current_dt.second);
-		lc_setTimeValue(ui_context.current_dt.hour, ui_context.current_dt.minute);
-		lc_refresh();
-		/* And GLCD */
-		vc_handleEvet(veDATA_UPDATED, &ui_context);
-		//tpl_home(ui_context, view_context);
 
+		devider++;
+		if (devider >= 5) {
+			devider = 0;
+			/* Temporary code to update LEDs */
+			lc_setSecondValue(ui_context.current_dt.second);
+			lc_setTimeValue(ui_context.current_dt.hour, ui_context.current_dt.minute);
+			lc_refresh();
+			/* And GLCD */
+			vc_handleEvet(veDATA_UPDATED, &ui_context);
+			//tpl_home(ui_context, view_context);
+		}
 		// Sleep
-		vTaskDelay(20);
+		vTaskDelay(5);
 	}
 }
 

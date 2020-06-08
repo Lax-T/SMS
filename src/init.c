@@ -159,14 +159,17 @@ void init() {
 
 	// PORT D init
 	GPIOInit.GPIO_Mode = GPIO_Mode_IN;
-	GPIOInit.GPIO_Pin = GPIO_Pin_3 | GPIO_Pin_2 | GPIO_Pin_1;
+	GPIOInit.GPIO_Pin = TK_BACK_PIN | TK_LEFT_PIN | TK_OK_PIN | TK_RIGHT_PIN | TK_OPT_PIN;
 	GPIO_Init(GPIOD, &GPIOInit);
 
 	GPIOInit.GPIO_Mode = GPIO_Mode_OUT;
 	GPIOInit.GPIO_OType= GPIO_OType_PP;
-	GPIOInit.GPIO_Pin = GPIO_Pin_6 | GPIO_Pin_8 | GPIO_Pin_13;
+	GPIOInit.GPIO_Pin = TK_SYNC_135_PIN | TK_SYNC_24_PIN | GPIO_Pin_8 | GPIO_Pin_13;
 	GPIOInit.GPIO_Speed = GPIO_Speed_25MHz;
 	GPIO_Init(GPIOD, &GPIOInit);
+
+	GPIO_SetBits(TK_SYNC_135_PORT, TK_SYNC_135_PIN);
+	GPIO_SetBits(TK_SYNC_24_PORT, TK_SYNC_24_PIN);
 
 	// PORT E init
 	GPIOInit.GPIO_Mode = GPIO_Mode_OUT;
