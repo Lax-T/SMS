@@ -96,6 +96,7 @@ void init() {
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOE, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
 	RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM6, ENABLE);
+	RCC_APB1PeriphClockCmd(RCC_APB1Periph_DAC, ENABLE);
 
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
 	//RCC_APB2PeriphClockCmd(RCC_APB2Periph_ADC1, ENABLE);
@@ -103,6 +104,10 @@ void init() {
 	/* PORT A init */
 	GPIOInit.GPIO_Mode = GPIO_Mode_IN;
 	GPIOInit.GPIO_Pin = SQW_IN_PIN;
+	GPIO_Init(GPIOA, &GPIOInit);
+
+	GPIOInit.GPIO_Mode = GPIO_Mode_AN;
+	GPIOInit.GPIO_Pin = LCDBL_PIN;
 	GPIO_Init(GPIOA, &GPIOInit);
 
 	GPIOInit.GPIO_Mode = GPIO_Mode_OUT;
@@ -207,9 +212,17 @@ void init() {
 	ADCInit.ADC_DataAlign = ADC_DataAlign_Right;
 	ADCInit.ADC_NbrOfChannel = 1;
 	ADC_Init ( ADC1, &ADCInit);
-
 	ADC_Cmd (ADC1, ENABLE);  //enable ADC1*/
 
+	// DAC init
+	DACInit.DAC_Trigger = DAC_Trigger_None;
+	DACInit.DAC_WaveGeneration = DAC_WaveGeneration_None;
+	DACInit.DAC_OutputBuffer = DAC_OutputBuffer_Enable;
+	DAC_Init(DAC_Channel_1, &DACInit);
+	DAC_Cmd(DAC_Channel_1, ENABLE);
+	DAC_SetChannel1Data(DAC_Align_8b_R, 0);
+
+	// Timers init
 	TIM_TimeBaseStructure.TIM_Period  = 0x0003;
 	TIM_TimeBaseStructure.TIM_Prescaler = (1)-1;
 	TIM_TimeBaseStructure.TIM_ClockDivision = TIM_CKD_DIV1;
