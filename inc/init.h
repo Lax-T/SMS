@@ -32,6 +32,10 @@
 #define TK_OPT_PIN GPIO_Pin_1
 #define TK_OPT_PORT GPIOD
 
+/* LCD backlight (DAC1) */
+#define LCDBL_PORT GPIOA
+#define LCDBL_PIN GPIO_Pin_4
+
 /* Functions */
 void init();
 unsigned char clkInit();

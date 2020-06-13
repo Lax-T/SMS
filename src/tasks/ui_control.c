@@ -7,6 +7,7 @@
 #include "ui/led_control.h"
 #include "drivers/UC1608X_driver.h"
 #include "drivers/touch_key_driver.h"
+#include "drivers/lcd_backlight.h"
 #include "misc/task_messaging.h"
 
 extern QueueHandle_t xUIQueue;
@@ -26,6 +27,7 @@ void uic_taskUIControl(void *arg) {
 	gl_clearBuffer();
 	gl_refreshLCD();
 	uc_lcdOn();
+	lcdbl_setBacklight(0x12);
 	/* Led controllers initialization */
 	lc_init();
 	lc_setBacklightGroupValue(10);
