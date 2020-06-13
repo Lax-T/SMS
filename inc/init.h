@@ -12,6 +12,12 @@
 #define SLI2C_SDA_PIN GPIO_Pin_10
 #define SLI2C_SDA_PORT GPIOA
 
+/* AUX I2C bus */
+#define AUXI2C_SCL_PIN GPIO_Pin_14
+#define AUXI2C_SCL_PORT GPIOD
+#define AUXI2C_SDA_PIN GPIO_Pin_15
+#define AUXI2C_SDA_PORT GPIOD
+
 /* DS3231 square waveform output (SQW) (MCU in) */
 #define SQW_IN_PIN GPIO_Pin_11
 #define SQW_IN_PORT GPIOA

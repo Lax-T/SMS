@@ -7,6 +7,7 @@
 #include "drivers/SHT21_driver.h"
 #include "drivers/MPL3115A2_driver.h"
 #include "drivers/iAQcore_driver.h"
+#include "drivers/APDS9300_driver.h"
 #include "misc/datetime.h"
 #include "misc/task_messaging.h"
 
@@ -34,6 +35,9 @@ extern QueueHandle_t xUIQueue;
 #define tSBM_HUM_MEASURE 1 // 100mS -  Humidity measure time
 #define tSBM_AIRP_MEASURE 4 // 400mS - Pressure measure time
 
+#define tSBM_AMB_LIGHT_STARTUP 10 // 1S - Time to first measurement after power-up
+#define tSBM_AMB_LIGHT_PERIOD 10 // 1S - Ambient light read period
+
 /* Steps */
 #define sSBM_RHT_MTEMP 0
 #define sSBM_RHT_RTEMP 1
@@ -49,8 +53,9 @@ extern QueueHandle_t xUIQueue;
 #define flSBM_RHT_RUN 0x04
 #define flSBM_AIRP_RUN 0x08
 #define flSBM_IAQ_RUN 0x10
+#define flSBM_ABL_RUN 0x20
 
-/* Struct definitions */
+/* Structures definitions */
 struct SBMSubTask {
 	u8 step;
 	u16 counter;
@@ -60,13 +65,16 @@ struct SBMContext {
 	struct SBMSubTask rht;
 	struct SBMSubTask airp;
 	struct SBMSubTask iaq;
+	struct SBMSubTask abl;
 	u8 flags;
 };
 
+/* Function definitions */
 void _smb_readTime();
 void _sbm_runRHT(struct SBMContext *context);
 void _sbm_runAIRP(struct SBMContext *context);
 void _sbm_runiAQ(struct SBMContext *context);
+void _sbm_runAmbLight(struct SBMContext *context);
 void _sbm_updateCounters(struct SBMContext *context);
 
 /* Slow I2C bus master task */
@@ -76,11 +84,13 @@ void sbm_taskSlowBusMaster(void *arg) {
 			{sSBM_RHT_MTEMP, tSBM_RHT_STARTUP},
 			{sSBM_AIRP_MESURE, tSBM_AIRP_STARTUP},
 			{0, tSBM_IAQ_STARTUP},
+			{0, tSBM_AMB_LIGHT_STARTUP},
 			0
 	};
 	/* Give some time for power up. */
 	vTaskDelay(pdMS_TO_TICKS(100));
 	rtc_ponInit();
+	apds_ponInit();
 
 	//xQueueSend(xQueueUIEvent, (void *) &ui_message, 0);
 	//xQueueReceive(xQueueSysEvent, &(sys_message), 0)
@@ -115,9 +125,14 @@ void sbm_taskSlowBusMaster(void *arg) {
 			context.flags &= ~flSBM_AIRP_RUN;
 		}
 		if ((context.flags & flSBM_IAQ_RUN) != 0) {
-			/* Run AIRP sub task */
+			/* Run iAQ sub task */
 			_sbm_runiAQ(&context);
 			context.flags &= ~flSBM_IAQ_RUN;
+		}
+		if ((context.flags & flSBM_ABL_RUN) != 0) {
+			/* Run AmbLight sub task */
+			_sbm_runAmbLight(&context);
+			context.flags &= ~flSBM_ABL_RUN;
 		}
 
 		/* Sleep 100mS */
@@ -248,6 +263,23 @@ void _sbm_runiAQ(struct SBMContext *context) {
 	context->iaq.counter = tSBM_IAQ_PERIOD;
 }
 
+/* Read ambient light level subtask */
+void _sbm_runAmbLight(struct SBMContext *context) {
+	struct StandardQueueMessage message;
+	u8 abl_val;
+
+	/* Get current ambient light level */
+	abl_val = apds_readAmbientLight();
+	/* Send updated value */
+	message.type = mtAMB_LIGHT_LEVEL;
+	message.sender = msSL_BUS_MASTER;
+	message.payload[0] = abl_val;
+	/* Send message */
+	xQueueSend(xUIQueue, (void *) &message, 0);
+	/* Set timeout before next measurement */
+	context->abl.counter = tSBM_AMB_LIGHT_PERIOD;
+}
+
 /* Count time and set run flags */
 void _sbm_updateCounters(struct SBMContext *context) {
 	if (context->rht.counter > 0) {
@@ -266,6 +298,12 @@ void _sbm_updateCounters(struct SBMContext *context) {
 		context->iaq.counter--;
 		if (context->iaq.counter == 0) {
 			context->flags |= flSBM_IAQ_RUN;
+		}
+	}
+	if (context->abl.counter > 0) {
+		context->abl.counter--;
+		if (context->abl.counter == 0) {
+			context->flags |= flSBM_ABL_RUN;
 		}
 	}
 }
