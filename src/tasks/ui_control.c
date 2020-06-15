@@ -60,6 +60,7 @@ void uic_taskUIControl(void *arg) {
 		_uic_checkQueue(&ui_context);
 		key = tk_scanKeys();
 		if (key != 0) { // TODO: test code
+			vc_handleEvet(key, &ui_context);
 			ui_context.rm1_temp = key;
 		}
 
