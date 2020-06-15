@@ -59,7 +59,7 @@ void uic_taskUIControl(void *arg) {
 	while(1) {
 		_uic_checkQueue(&ui_context);
 		key = tk_scanKeys();
-		if (key != 0) {
+		if (key != 0) { // TODO: test code
 			ui_context.rm1_temp = key;
 		}
 
@@ -109,6 +109,10 @@ void _uic_checkQueue(struct UIContext *ui_context) {
 		case mtAIR_QUALITY:
 			ui_context->in_eco2 = 0x0000 | ((0x0000 | message.payload[0]) << 8) | message.payload[1];
 			ui_context->in_tvoc = 0x0000 | ((0x0000 | message.payload[2]) << 8) | message.payload[3];
+			break;
+
+		case mtAMB_LIGHT_LEVEL: // TODO: test code
+			ui_context->rm1_rh = (u8)(message.payload[0] / 2.6);
 			break;
 		}
 	}

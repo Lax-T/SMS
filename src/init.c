@@ -172,9 +172,18 @@ void init() {
 	GPIOInit.GPIO_Pin = TK_SYNC_135_PIN | TK_SYNC_24_PIN | GPIO_Pin_8 | GPIO_Pin_13;
 	GPIOInit.GPIO_Speed = GPIO_Speed_25MHz;
 	GPIO_Init(GPIOD, &GPIOInit);
-
+	/* Enable touch controllers */
 	GPIO_SetBits(TK_SYNC_135_PORT, TK_SYNC_135_PIN);
 	GPIO_SetBits(TK_SYNC_24_PORT, TK_SYNC_24_PIN);
+
+	GPIOInit.GPIO_Mode = GPIO_Mode_OUT;
+	GPIOInit.GPIO_OType= GPIO_OType_OD;
+	GPIOInit.GPIO_Pin = AUXI2C_SCL_PIN | AUXI2C_SDA_PIN;
+	GPIOInit.GPIO_Speed = GPIO_Speed_25MHz;
+	GPIO_Init(GPIOD, &GPIOInit);
+	/* Set HI AUX I2C bus SCL/SDA lines. */
+	GPIO_SetBits(GPIOD, AUXI2C_SCL_PIN);
+	GPIO_SetBits(GPIOD, AUXI2C_SDA_PIN);
 
 	// PORT E init
 	GPIOInit.GPIO_Mode = GPIO_Mode_OUT;
