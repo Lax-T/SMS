@@ -7,17 +7,21 @@
 #define veOK_BTN 3
 #define veRIGHT_BTN 4
 #define veOPT_BTN 5
-#define veVIEW_ENTER 10
-#define veVIEW_EXIT 11
-#define veVIEW_RETURN_TO 12
-#define veDATA_READY 20
-#define veDATA_UPDATED 21
-#define veINTERRUPTED 22
+#define veBACK_BTN_LP 6
+#define veOK_BTN_LP 8
+#define veOPT_BTN_LP 10
+#define veVIEW_ENTER 20
+#define veVIEW_EXIT 21
+#define veVIEW_RETURN_TO 22
+#define veDATA_READY 30
+#define veDATA_UPDATED 31
+#define veINTERRUPTED 32
 
 /* Views */
 #define vNONE 255 // Dummy, non executable view
 #define vDEFAULT 0 // Default (system) view
 #define vHOME 1
+#define vMENU 2
 
 /* Flags */
 #define fUI_RECURSION_ERR 0x01

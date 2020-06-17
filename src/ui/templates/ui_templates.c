@@ -3,6 +3,7 @@
 #include "ui/fonts.h"
 #include "ui/templates/ui_templates.h"
 #include "ui/templates/tpl_components.h"
+#include "ui/views/menus.h"
 
 
 /* HOME template (main screen) */
@@ -100,9 +101,43 @@ void _tpl_home(struct ViewContext *view_ctx, struct UIContext *ui_ctx) {
 	gl_refreshLCD();
 }
 
+/* LIST MENU template */
+void _tpl_listMenu(struct ViewContext *view_ctx, struct UIContext *ui_ctx) {
+	u8 i, x, y;
+	struct MenuList *menu_list;
+	/* Clear buffer */
+	gl_clearBuffer();
+	/* Get current menu list */
+	menu_list = m_getNestedMenuList(view_ctx->view_modifier, view_ctx->b_reg, view_ctx->data_array);
+	/* Draw lines */
+	gl_setCursor(0, 16);
+	gl_drawHLine(2, 128);
+	/* Title */
+	gl_setCursor(0, 0);
+	gl_printString(menu_list->title, ARIAL_12PTB);
+	/* Items */
+	x = 18;
+	y = 20;
+	for (i=0; i < menu_list->len; i++) {
+		gl_setCursor(x, y);
+		gl_printString(menu_list->items[i]->title, ARIAL_12PTB);
+		y += 20;
+	}
+	/* Cursor */
+	x = 0;
+	y = 19 + (20 * view_ctx->a_reg);
+	gl_setCursor(x, y);
+	gl_printString(">", ARIAL_12PTB);
+
+	/* Refresh */
+	gl_refreshLCD();
+}
+
+/* TEMPLATES INDEX AND ACCESS */
 /* Template renderer index */
 void (*_tpl_rendererIndex[])(struct ViewContext *view_ctx, struct UIContext *ui_ctx) = {
-		_tpl_home};
+		_tpl_home, _tpl_listMenu
+};
 
 /* Main invocation method - render template by ID */
 void tpl_renderTemplate(u8 template_id, struct ViewContext *view_ctx, struct UIContext *ui_ctx) {
