@@ -80,7 +80,9 @@ void gl_mergeTile(u8 tile[]) {
 	}
 }
 
-void gl_drawHLine (u8 line_width, u8 line_len) {
+/******************** DRAWING *************************/
+/* Draw filled rectangle */
+void gl_drawRectangle(u8 x_size, u8 y_size) {
 	u8 page, page_offset, col, bits, i;
 	/* Calculate page and page offset */
 	page = g_cursor.x / PAGE_SIZE;
@@ -88,39 +90,39 @@ void gl_drawHLine (u8 line_width, u8 line_len) {
 	/* Store current column value. */
 	col = g_cursor.y;
 	/* Draw in cycle until line_len is zero. With each iteration (draw cycle) this value is subtracted. */
-	while(line_len > 0) {
+	while(x_size > 0) {
 		/* Calculate what and how many bits should be set for next iteration. */
 		bits = 0xFF;
 		/* If less than 8 bits need to be draw - clear some bits. */
-		if (line_len < 8) {
-			bits = bits << (8 - line_len);
+		if (x_size < 8) {
+			bits = bits << (8 - x_size);
 		}
 		/* Check current page offset. */
 		if (page_offset != 0) {
 			/* Shift bits to match x offset. */
 			bits = bits >> page_offset;
 			/* Track how many bits will be actually set due to offset. */
-			if (line_len < (8 - page_offset)) {
+			if (x_size < (8 - page_offset)) {
 				/* If offset is bigger than current line length, than all bits will be drown in this iteration. */
-				line_len = 0;
+				x_size = 0;
 			}
 			else {
-				line_len = line_len - (8 - page_offset);
+				x_size = x_size - (8 - page_offset);
 			}
 		}
 		else {
 			/* If offset does not have to be accounted - simply track up to 8 dots set; */
-			if (line_len < 8) {
-				line_len = 0;
+			if (x_size < 8) {
+				x_size = 0;
 			}
 			else {
-				line_len = line_len - 8;
+				x_size = x_size - 8;
 			}
 		}
 		/* Page offset is only needed for first iteration */
 		page_offset = 0;
 		/* Depending on line width, merge bits with required number of columns. */
-		for (i=0;i < line_width; i++) {
+		for (i=0;i < y_size; i++) {
 			/* Terminate loop if out of buffer range */
 			if ((col + i) >= GLCD_COLUMNS) {
 				break;
@@ -137,6 +139,103 @@ void gl_drawHLine (u8 line_width, u8 line_len) {
 	}
 }
 
+/* Draw horizontal line shortcut */
+void gl_drawHLine (u8 line_width, u8 line_len) {
+	gl_drawRectangle(line_len, line_width);
+}
+
+/* Draw vertical line shortcut */
+void gl_drawVLine (u8 line_width, u8 line_len) {
+	gl_drawRectangle(line_width, line_len);
+}
+
+/* Draw hollow rectangle */
+void gl_drawHollowRect (u8 width, u8 hight, u8 line_thickness) {
+	u16 temp;
+	u8 x_stash = g_cursor.x;
+	u8 y_stash = g_cursor.y;
+	/* Draw top horizontal line */
+	gl_drawRectangle(width, line_thickness);
+	/* Draw left vertical line */
+	gl_drawRectangle(line_thickness, hight);
+	/* Check if bottom line is on screen */
+	temp = g_cursor.y + hight;
+	if (temp < GLCD_COLUMNS) {
+		g_cursor.y += hight;
+		/* Draw bottom horizontal line */
+		gl_drawRectangle(width + line_thickness, line_thickness);
+	}
+	/* Check if right vertical line is on screen */
+	temp = g_cursor.x + width;
+	if (temp < (GLCD_PAGES * PAGE_SIZE)) {
+		g_cursor.y = y_stash;
+		g_cursor.x += width;
+		/* Draw right vertical line */
+		gl_drawRectangle(line_thickness, hight);
+	}
+	g_cursor.x = x_stash;
+	g_cursor.y = y_stash;
+}
+
+/* Draw inverted rectangle */
+void gl_drawInvertedRect(u8 x_size, u8 y_size) {
+	u8 page, page_offset, col, bits, i;
+	/* Calculate page and page offset */
+	page = g_cursor.x / PAGE_SIZE;
+	page_offset = g_cursor.x - (page * PAGE_SIZE);
+	/* Store current column value. */
+	col = g_cursor.y;
+	/* Draw in cycle until line_len is zero. With each iteration (draw cycle) this value is subtracted. */
+	while(x_size > 0) {
+		/* Calculate what and how many bits should be set for next iteration. */
+		bits = 0xFF;
+		/* If less than 8 bits need to be draw - clear some bits. */
+		if (x_size < 8) {
+			bits = bits << (8 - x_size);
+		}
+		/* Check current page offset. */
+		if (page_offset != 0) {
+			/* Shift bits to match x offset. */
+			bits = bits >> page_offset;
+			/* Track how many bits will be actually set due to offset. */
+			if (x_size < (8 - page_offset)) {
+				/* If offset is bigger than current line length, than all bits will be drown in this iteration. */
+				x_size = 0;
+			}
+			else {
+				x_size = x_size - (8 - page_offset);
+			}
+		}
+		else {
+			/* If offset does not have to be accounted - simply track up to 8 dots set; */
+			if (x_size < 8) {
+				x_size = 0;
+			}
+			else {
+				x_size = x_size - 8;
+			}
+		}
+		/* Page offset is only needed for first iteration */
+		page_offset = 0;
+		/* Depending on line width, merge bits with required number of columns. */
+		for (i=0;i < y_size; i++) {
+			/* Terminate loop if out of buffer range */
+			if ((col + i) >= GLCD_COLUMNS) {
+				break;
+			}
+			/* Draw in buffer */
+			g_graphic_buffer[page][col + i] ^= bits;
+		}
+		/* Go to next page. */
+		page++;
+		/* If OOR - finish line draw. */
+		if (page >= GLCD_PAGES) {
+			break;
+		}
+	}
+}
+
+/***************** STRING PRINTING ******************/
 /* Print string starting with current cursor position. */
 void gl_printString(char *string, u8 font_id) {
 	u8 i, cursor_future_pos;
@@ -525,11 +624,7 @@ void gl_printFString(char *string, void *val, u8 font_id) {
 }
 
 /* Display icon by ID */
-void gl_displayIcon(u8 icon_id) {
+void gl_drawIcon(u8 icon_id) {
 	gl_mergeTile(ico_getIcon(icon_id));
 }
-
-
-
-
 
