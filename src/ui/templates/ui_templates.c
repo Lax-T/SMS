@@ -28,40 +28,40 @@ void _tpl_home(struct ViewContext *view_ctx, struct UIContext *ui_ctx) {
 	/* Internal RHT */
 	if ((ui_ctx->in_temp) < 0) {
 		gl_setCursor(0, 51);
-		gl_displayIcon(ICO_MINUS_12x6);
+		gl_drawIcon(ICO_MINUS_12x6);
 	}
 	gl_setCursor(0, 19);
 	gl_printString("in", ARIAL_10PTB);
 	gl_setCursor(17, 32);
 	gl_printFString("%|02sc", &(ui_ctx->in_temp), DIGITAL_44PX);
 	gl_setCursor(75, 73);
-	gl_displayIcon(ICO_DOT_3x3);
+	gl_drawIcon(ICO_DOT_3x3);
 	gl_setCursor(82, 57);
 	gl_printFString("%uc", &(ui_ctx->in_temp_fract), DIGITAL_19PX);
 	gl_setCursor(85, 22);
 	gl_printFString("%uc", &(ui_ctx->in_rh), DIGITAL_25PX);
 	gl_setCursor(97, 61);
-	gl_displayIcon(ICO_DEGREE_C15);
+	gl_drawIcon(ICO_DEGREE_C15);
 	gl_setCursor(119, 37);
 	gl_printString("%", ARIAL_10PTB);
 
 	/* Remote RHT */
 	if ((ui_ctx->rm1_temp) < 0) {
 		gl_setCursor(0, 115);
-		gl_displayIcon(ICO_MINUS_12x6);
+		gl_drawIcon(ICO_MINUS_12x6);
 	}
 	gl_setCursor(0, 83);
 	gl_printString("out", ARIAL_10PTB);
 	gl_setCursor(17, 96);
 	gl_printFString("%|02sc", &(ui_ctx->rm1_temp), DIGITAL_44PX);
 	gl_setCursor(75, 137);
-	gl_displayIcon(ICO_DOT_3x3);
+	gl_drawIcon(ICO_DOT_3x3);
 	gl_setCursor(82, 121);
 	gl_printFString("%uc", &(ui_ctx->rm1_temp_fract), DIGITAL_19PX);
 	gl_setCursor(85, 86);
 	gl_printFString("%uc", &(ui_ctx->rm1_rh), DIGITAL_25PX);
 	gl_setCursor(97, 125);
-	gl_displayIcon(ICO_DEGREE_C15);
+	gl_drawIcon(ICO_DEGREE_C15);
 	gl_setCursor(119, 101);
 	gl_printString("%", ARIAL_10PTB);
 
@@ -116,18 +116,22 @@ void _tpl_listMenu(struct ViewContext *view_ctx, struct UIContext *ui_ctx) {
 	gl_setCursor(0, 0);
 	gl_printString(menu_list->title, ARIAL_12PTB);
 	/* Items */
-	x = 18;
-	y = 20;
+	x = 9;
+	y = 22;
 	for (i=0; i < menu_list->len; i++) {
 		gl_setCursor(x, y);
 		gl_printString(menu_list->items[i]->title, ARIAL_12PTB);
 		y += 20;
 	}
+	/**/
+	//gl_setCursor(9, 21);
+	//gl_drawInvertedRect(80, 16);
+
 	/* Cursor */
 	x = 0;
-	y = 19 + (20 * view_ctx->a_reg);
+	y = 22 + (20 * view_ctx->a_reg);
 	gl_setCursor(x, y);
-	gl_printString(">", ARIAL_12PTB);
+	gl_drawIcon(ICO_ARR_RIGHT_7x14);
 
 	/* Refresh */
 	gl_refreshLCD();
