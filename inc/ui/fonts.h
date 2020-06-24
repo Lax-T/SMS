@@ -1,4 +1,4 @@
-#include <globals.h>
+#include "globals.h"
 
 #define CONSOLAS_11PT 0
 #define ARIAL_12PTB 1

@@ -1,4 +1,4 @@
-#include <globals.h>
+#include "globals.h"
 
 #define ARIAL12PTB_SPACING 1
 
