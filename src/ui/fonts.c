@@ -1,12 +1,12 @@
-#include <globals.h>
-#include <ui/fonts.h>
-#include <ui/fonts/consolas11pt.h>
-#include <ui/fonts/arial12b.h>
-#include <ui/fonts/arial10ptb.h>
-#include <ui/fonts/digital19px.h>
-#include <ui/fonts/digital25px.h>
-#include <ui/fonts/digital44px.h>
+#include "ui/fonts.h"
+#include "ui/fonts/consolas11pt.h"
+#include "ui/fonts/arial10ptb.h"
+#include "ui/fonts/arial12ptb.h"
+#include "ui/fonts/digital19px.h"
+#include "ui/fonts/digital25px.h"
+#include "ui/fonts/digital44px.h"
 
+/* Get font pointer by ID */
 u8* fnt_getFont(u8 font_id) {
 	switch (font_id) {
 	case CONSOLAS_11PT:
@@ -30,6 +30,7 @@ u8* fnt_getFont(u8 font_id) {
 	}
 }
 
+/* Get char spacing by font ID */
 u8 fnt_getCharSpacing(u8 font_id) {
 	switch (font_id) {
 	case CONSOLAS_11PT:
