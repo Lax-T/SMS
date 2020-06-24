@@ -12,6 +12,7 @@
 #include "misc/task_messaging.h"
 
 extern QueueHandle_t xUIQueue;
+extern QueueHandle_t xSBMQueue;
 
 /* Timings */
 #define tSBM_TASK_PERIOD pdMS_TO_TICKS(100) // 100mS task run period in "ticks"
@@ -79,6 +80,8 @@ void _sbm_updateCounters(struct SBMContext *context);
 
 /* Slow I2C bus master task */
 void sbm_taskSlowBusMaster(void *arg) {
+	struct StandardQueueMessage message;
+	struct DateTime datetime_to_set;
 	u8 sqw_state = 0;
 	struct SBMContext context = {
 			{sSBM_RHT_MTEMP, tSBM_RHT_STARTUP},
@@ -108,7 +111,21 @@ void sbm_taskSlowBusMaster(void *arg) {
 		/* Update subtask counters and set run flags if required. */
 		_sbm_updateCounters(&context);
 
+		/* Check message queue */
+		while(xQueueReceive(xSBMQueue, &(message), 0)) {
+			if (message.type == mtDATE_TIME) {
+				/* Prepare DateTime and set run flag */
+				deSerializeDateTime(message.payload, &datetime_to_set);
+				context.flags |= flSBM_RTC_SET;
+			}
+		}
+
 		/* Check flags and run scheduled subtasks. */
+		if ((context.flags & flSBM_RTC_SET) != 0) {
+			/* Set time to RTC */
+			_sbm_setTime(&datetime_to_set);
+			context.flags &= ~flSBM_RTC_SET;
+		}
 		if ((context.flags & flSBM_RTC_READ) != 0) {
 			/* Read time from RTC */
 			_smb_readTime();
@@ -155,8 +172,8 @@ void _smb_readTime() {
 }
 
 /* Set time subtask */
-void _sbm_setTime() {
-
+void _sbm_setTime(struct DateTime *datetime_to_set) {
+	 rtc_setDateTime(datetime_to_set);
 }
 
 /* Read temperature/humidity subtask */

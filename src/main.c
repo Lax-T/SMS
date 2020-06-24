@@ -28,6 +28,7 @@
 			
 
 QueueHandle_t xUIQueue;
+QueueHandle_t xSBMQueue;
 
 
 int main(void)
@@ -171,11 +172,12 @@ int main(void)
 
 	/* Create queues */
 	xUIQueue = xQueueCreate(10, sizeof(struct StandardQueueMessage));
+	xSBMQueue = xQueueCreate(2, sizeof(struct StandardQueueMessage));
 
 	/* Initialize tasks (threads) */
-	xTaskCreate(uic_taskUIControl, "UI ctrl", 256, NULL, 1, NULL);
+	xTaskCreate(uic_taskUIControl, "UI ctrl", 512, NULL, 3, NULL);
 	xTaskCreate(sbm_taskSlowBusMaster, "Slow I2C", 256, NULL, 1, NULL);
-	//xTaskCreate(sys_taskSystem, "System", 128, NULL, 1, NULL);
+	//xTaskCreate(sys_taskSystem, "System", 128, NULL, 2, NULL);
 	vTaskStartScheduler();
 	/*
 	u8 sec = 0;
