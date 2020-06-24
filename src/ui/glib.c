@@ -37,6 +37,28 @@ void gl_setCursor(u8 x, u8 y) {
 	g_cursor.y = y;
 }
 
+/* Shift cursor on X axis */
+void gl_shiftCursotRight(u8 val) {
+	u16 temp;
+	temp = g_cursor.x + val;
+	if (temp >= GLCD_ROWS) {
+		g_cursor.x = GLCD_ROWS - 1;
+	}
+	else {
+		g_cursor.x = temp;
+	}
+}
+
+/* Shift cursor on X axis */
+void gl_shiftCursotLeft(u8 val) {
+	if (g_cursor.x >= val) {
+		g_cursor.x -= val;
+	}
+	else {
+		g_cursor.x = 0;
+	}
+}
+
 /* Merge (OR operation) tile to graphic buffer. */
 void gl_mergeTile(u8 tile[]) {
 	u8 tile_pages, tile_cols, page, col, page_offset, i, j, temp;

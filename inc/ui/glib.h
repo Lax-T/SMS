@@ -7,6 +7,8 @@
 void gl_clearBuffer();
 void gl_refreshLCD();
 void gl_setCursor(u8 x, u8 y);
+void gl_shiftCursotRight(u8 val);
+void gl_shiftCursotLeft(u8 val);
 void gl_mergeTile(u8 tile[]);
 void gl_drawRectangle(u8 x_size, u8 y_size);
 void gl_drawHLine (u8 line_width, u8 line_len);
