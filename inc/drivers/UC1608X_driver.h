@@ -11,6 +11,7 @@
 
 #define GLCD_PAGES 16
 #define GLCD_COLUMNS 240
+#define GLCD_ROWS 128
 
 #define SPI_CS_PORT GPIOB
 #define SPI_CS_PIN GPIO_Pin_8
