@@ -72,8 +72,25 @@ u8 vcm_executeEvent(u8 event_code, struct ViewContext *view_ctx, struct UIContex
 	}
 	/* Get view meta object */
 	view_meta = vw_getViewMeta(view_ctx->view_id);
-	/* Run view handler method */
-	return (view_meta->method)(event_code, view_ctx, ui_ctx);
+	/* Try to run view native handler */
+	if ((view_meta->method)(event_code, view_ctx, ui_ctx) == TRUE) {
+		/* If handler exists and was executed - exit */
+		return TRUE;
+	}
+	/* If native handler does not exist, try to execute one from parent view */
+	else if (view_meta->parent_view != vNONE) {
+		/* Get parent view meta object */
+		view_meta = vw_getViewMeta(view_meta->parent_view);
+		/* Try to run parent view handler */
+		if ((view_meta->method)(event_code, view_ctx, ui_ctx) == TRUE) {
+			/* If handler exists and was executed - exit */
+			return TRUE;
+		}
+		/* If event still wasn't handled - return FALSE */
+		return FALSE;
+	}
+	/* If event was not handled, return FALSE */
+	return FALSE;
 }
 
 

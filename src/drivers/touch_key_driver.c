@@ -3,7 +3,7 @@
 /* Delays (in key scan cycles) */
 #define LP_EVENT_DELAY 40
 #define REP_EVENT_DELAY 20
-#define REP_DELAY 4
+#define REP_DELAY 3
 
 struct TouchKeysState gs_tk_keys_state = {
 		{TK_AF_LPRESS, TK_AF_REPEAT, TK_AF_LPRESS, TK_AF_REPEAT, TK_AF_LPRESS},
@@ -87,7 +87,7 @@ u8 tk_scanKeys() {
 					return gs_tk_keys_state.last_pressed;
 				}
 				/* Execute fast repeat */
-				else if (gs_tk_keys_state.counter >= REP_DELAY) {
+				else if (gs_tk_keys_state.alt_step == REPEAT_DELAY && gs_tk_keys_state.counter >= REP_DELAY) {
 					gs_tk_keys_state.counter = 0;
 					return gs_tk_keys_state.last_pressed;
 				}
