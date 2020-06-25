@@ -1,19 +1,30 @@
 #include "ui/views/menus.h"
+#include "ui/views/views_control.h"
 
 /* MENUS TEXT */
-const char txt_menu[] = "Menu";
-const char txt_setup[] = "Setup";
-const char txt_alarms[] = "Alarms";
-const char txt_calendar[] = "Calendar";
+const char txt_menu[] = "Меню";
+const char txt_setup[] = "Налаштуван.";
+const char txt_alarms[] = "Будильники";
+const char txt_calendar[] = "Календар";
+const char txt_set_date_time[] = "Дата і час";
 
 /* MENUS DEFINITIONS */
 /* Dummy sub menu */
 const struct MenuList _m_Dummy = {};
 
-/* Main menu */
-const struct MenuItem _m_itemSetup = {.title = txt_setup, .action = mNOP};
-const struct MenuItem _m_itemAlarms = {.title = txt_alarms, .action = mNOP};
+/* MAIN MENU */
+/* Settings sublist */
+const struct MenuItem _m_itemSetDateTime = {.title = txt_set_date_time, .action = mGO_VIEW(vDATETIME_SET, 0)};
+
+const struct MenuList m_smSettings = {
+		.len = 1,
+		.title = txt_setup,
+		.items = {&_m_itemSetDateTime}
+};
+/* Main list */
 const struct MenuItem _m_itemCalendar = {.title = txt_calendar, .action = mNOP};
+const struct MenuItem _m_itemAlarms = {.title = txt_alarms, .action = mNOP};
+const struct MenuItem _m_itemSetup = {.title = txt_setup, .action = mGO_SUB_MENU, .sub_list = &m_smSettings};
 
 const struct MenuList m_MainMenu = {
 		.len = 3,

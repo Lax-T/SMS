@@ -37,3 +37,7 @@ struct DateTime {
 
 void serializeDateTime(struct DateTime *date_time, u8 buffer[]);
 void deSerializeDateTime(u8 buffer[], struct DateTime *date_time);
+u8 dt_isLeapYear(u8 year);
+u8 dt_getDaysInMonth(u8 year, u8 month);
+u8 dt_getDayOfWeek(u8 year, u8 month, u8 day);
+

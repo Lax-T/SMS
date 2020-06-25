@@ -123,15 +123,81 @@ void _tpl_listMenu(struct ViewContext *view_ctx, struct UIContext *ui_ctx) {
 		gl_printString(menu_list->items[i]->title, ARIAL_12PTB);
 		y += 20;
 	}
-	/**/
-	//gl_setCursor(9, 21);
-	//gl_drawInvertedRect(80, 16);
 
 	/* Cursor */
 	x = 0;
-	y = 22 + (20 * view_ctx->a_reg);
+	y = 21 + (20 * view_ctx->a_reg);
 	gl_setCursor(x, y);
 	gl_drawIcon(ICO_ARR_RIGHT_7x14);
+
+	/* Refresh */
+	gl_refreshLCD();
+}
+
+
+const u8 _set_datetime_x_lookup[] = {16, 61, 88, 40, 67};
+const u8 _set_datetime_y_lookup[] = {72, 72, 72, 158, 158};
+/* DATE/TIME set template */
+void _tpl_setDateTime(struct ViewContext *view_ctx, struct UIContext *ui_ctx) {
+	u8 i, temp, x, y;
+	/* Clear buffer */
+	gl_clearBuffer();
+	/* Draw lines */
+	gl_setCursor(0, 32);
+	gl_drawHLine(2, 128);
+	/* Title */
+	gl_setCursor(0, 0);
+	gl_printString("Налаштування", ARIAL_12PTB);
+	gl_setCursor(0, 16);
+	gl_printString("дати і часу", ARIAL_12PTB);
+	/* Display all edited parameters parameters */
+	gl_setCursor(18, 74);
+	temp = vgh_getParam(0, view_ctx);
+	gl_printFString("2%03uc", &(temp), ARIAL_12PTB);
+	gl_shiftCursotRight(3);
+	gl_printString(":", ARIAL_12PTB);
+	gl_shiftCursotRight(2);
+	temp = vgh_getParam(1, view_ctx) + 1;
+	gl_printFString("%02uc", &(temp), ARIAL_12PTB);
+	gl_shiftCursotRight(3);
+	gl_printString(":", ARIAL_12PTB);
+	gl_shiftCursotRight(2);
+	temp = vgh_getParam(2, view_ctx) + 1;
+	gl_printFString("%02uc", &(temp), ARIAL_12PTB);
+
+	/* Display day of week according to entered date */
+	gl_setCursor(26, 116);
+	temp = dt_getDayOfWeek(vgh_getParam(0, view_ctx), vgh_getParam(1, view_ctx) + 1, vgh_getParam(2, view_ctx) + 1);
+	tplc_printDOWFull(temp, ARIAL_12PTB);
+
+	/* Highlight currently edited parameter */
+	gl_setCursor(42, 160);
+	temp = vgh_getParam(3, view_ctx);
+	gl_printFString("%02uc", &(temp), ARIAL_12PTB);
+	gl_shiftCursotRight(3);
+	gl_printString(":", ARIAL_12PTB);
+	gl_shiftCursotRight(2);
+	temp = vgh_getParam(4, view_ctx);
+	gl_printFString("%02uc", &(temp), ARIAL_12PTB);
+
+	/* Highlight edited parameter */
+	x = _set_datetime_x_lookup[view_ctx->a_reg];
+	y = _set_datetime_y_lookup[view_ctx->a_reg];
+	gl_setCursor(x, y);
+	if (view_ctx->a_reg == 0) {
+		gl_drawInvertedRect(39, 16);
+		gl_setCursor(x + 11, y - 10);
+		gl_drawIcon(ICO_ARR_UP_16x8);
+		gl_setCursor(x + 11, y + 18);
+		gl_drawIcon(ICO_ARR_DOWN_16x8);
+	}
+	else {
+		gl_drawInvertedRect(21, 16);
+		gl_setCursor(x + 2, y - 10);
+		gl_drawIcon(ICO_ARR_UP_16x8);
+		gl_setCursor(x + 2, y + 18);
+		gl_drawIcon(ICO_ARR_DOWN_16x8);
+	}
 
 	/* Refresh */
 	gl_refreshLCD();
@@ -140,7 +206,7 @@ void _tpl_listMenu(struct ViewContext *view_ctx, struct UIContext *ui_ctx) {
 /* TEMPLATES INDEX AND ACCESS */
 /* Template renderer index */
 void (*_tpl_rendererIndex[])(struct ViewContext *view_ctx, struct UIContext *ui_ctx) = {
-		_tpl_home, _tpl_listMenu
+		_tpl_home, _tpl_listMenu, _tpl_setDateTime
 };
 
 /* Main invocation method - render template by ID */

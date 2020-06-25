@@ -22,6 +22,7 @@
 #define vDEFAULT 0 // Default (system) view
 #define vHOME 1
 #define vMENU 2
+#define vDATETIME_SET 3
 
 /* Flags */
 #define fUI_RECURSION_ERR 0x01
